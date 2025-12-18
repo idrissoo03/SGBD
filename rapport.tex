@@ -1,0 +1,284 @@
+\documentclass[a4paper,12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{titlesec}
+
+% Configuration des marges
+\geometry{hmargin=2.5cm,vmargin=2.5cm}
+
+% Configuration pour le code
+\definecolor{javared}{rgb}{0.6,0,0}
+\definecolor{javagreen}{rgb}{0.25,0.5,0.35}
+\definecolor{javapurple}{rgb}{0.5,0,0.35}
+\definecolor{javadocblue}{rgb}{0.25,0.35,0.75}
+
+\lstset{
+    language=SQL,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{javapurple}\bfseries,
+    stringstyle=\color{javared},
+    commentstyle=\color{javagreen},
+    morecomment=[s][\color{javadocblue}]{/**}{*/},
+    numbers=left,
+    numberstyle=\tiny\color{black},
+    stepnumber=1,
+    numbersep=10pt,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    captionpos=b
+}
+
+\title{\textbf{Rapport de Projet SGBD}\\ \Large Système de Gestion de Livraison des Commandes}
+\author{Votre Nom \\ \small Groupe / Section}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\chapter{Introduction}
+
+\section{Contexte du Projet}
+Ce projet a été réalisé dans le cadre du module Système de Gestion de Bases de Données (SGBD). Il consiste en la conception et le développement d'une application complète de gestion de livraison de commandes s'appuyant sur une base de données Oracle.
+
+\section{Objectifs}
+L'objectif principal est d'informatiser le processus de traitement des commandes, depuis leur création par les clients jusqu'à leur livraison finale, en passant par la gestion des stocks d'articles.
+
+Le système couvre les trois volets suivants :
+\begin{itemize}
+    \item \textbf{Gestion des Commandes} (Module Obligatoire)
+    \item \textbf{Gestion des Livraisons} (Module Obligatoire)
+    \item \textbf{Gestion des Articles} (Module Choisi)
+\end{itemize}
+
+\section{Outils et Technologies}
+\begin{itemize}
+    \item \textbf{SGBD} : Oracle Database 11g/19c
+    \item \textbf{Langage SGBD} : PL/SQL (Procédures stockées, Triggers, Packages)
+    \item \textbf{Backend} : Node.js avec Express et node-oracledb
+    \item \textbf{Frontend} : HTML5, CSS3, JavaScript (Vanilla)
+\end{itemize}
+
+\chapter{Conception et Modélisation}
+
+\section{Schéma Relationnel}
+La base de données repose sur le schéma relationnel suivant :
+
+\begin{itemize}
+    \item \textbf{Articles}(\underline{refart}, designation, prixA, prixV, codetva, categorie, qtestk, supp)
+    \item \textbf{Clients}(\underline{noclt}, nomclt, prenomclt, adrclt, code\_postal, telclt, adrmail)
+    \item \textbf{Commandes}(\underline{nocde}, \#noclt, datecde, etatcde)
+    \item \textbf{LigCdes}(\underline{\#nocde, \#refart}, qtecde)
+    \item \textbf{Personnel}(\underline{idpers}, nompers, prenompers, ... , login, motP, \#codeposte)
+    \item \textbf{LivraisonCom}(\underline{\#nocde}, dateliv, \#livreur, modepay, etaliv)
+    \item \textbf{Poste}(\underline{codeposte}, libelle, indice)
+\end{itemize}
+
+\section{États des Commandes}
+Le cycle de vie d'une commande suit un processus rigoureux défini par les états suivants :
+\begin{itemize}
+    \item \textbf{EC (En Cours)} : État initial lors de la création.
+    \item \textbf{PR (Prête)} : La commande est validée et prête à être livrée.
+    \item \textbf{LI (En Livraison)} : Un livreur a pris en charge la commande.
+    \item \textbf{SO (Sortie/Livrée)} : La livraison est effectuée.
+    \item \textbf{AN (Annulée)} : Commande annulée par le client ou le gestionnaire.
+\end{itemize}
+
+\chapter{Implémentation Base de Données}
+
+\section{Packages PL/SQL}
+L'architecture applicative côté base de données est modulaire, utilisant des packages pour encapsuler la logique métier.
+
+\subsection{PKG\_COMMANDES}
+Gère le cycle de vie des commandes.
+\begin{itemize}
+    \item `AJOUTER_COMMANDE` : Crée une commande avec l'état 'EC'.
+    \item `MODIFIER_ETAT_COMMANDE` : Gère les transitions d'états valides.
+\end{itemize}
+
+\subsection{PKG\_LIVRAISONS}
+Gère l'affectation et le suivi des livraisons.
+\begin{itemize}
+    \item `AJOUTER_LIVRAISON` : Associe un livreur à une commande prête ('PR').
+    \item Vérifie la limite de 15 livraisons par jour et par ville pour un livreur.
+\end{itemize}
+
+\subsection{PKG\_ARTICLES}
+Permet la gestion du catalogue produit.
+\begin{itemize}
+    \item Intègre la vérification des prix (Prix Vente > Prix Achat).
+    \item Gère la suppression logique pour conserver l'historique des commandes.
+\end{itemize}
+
+\section{Triggers et Règles de Gestion}
+Des triggers ont été mis en place pour assurer l'intégrité des données :
+\begin{enumerate}
+    \item \textbf{Validation des Données} : Vérification des formats (téléphone, email) et de la cohérence des prix.
+    \item \textbf{Règles Métier} : 
+    \begin{itemize}
+        \item `trg_liv_limite` : Empêche un livreur de dépasser son quota journalier.
+        \item `trg_liv_horaire` : Restreint les modifications de planning selon l'heure de la journée.
+    \end{itemize}
+    \item \textbf{Automatisation} : Mise à jour automatique de l'état de la commande lors d'une action de livraison.
+\end{enumerate}
+
+\chapter{Développement de l'Application}
+
+\section{Architecture Backend (Node.js)}
+Le serveur utilise \textbf{Express.js} pour exposer une API RESTful qui communique avec Oracle via le pilote \texttt{node-oracledb}.
+
+\subsection{Structure des Routes}
+\begin{itemize}
+    \item \texttt{/api/commandes} : Endpoints pour créer et suivre les commandes.
+    \item \texttt{/api/livraisons} : Endpoints pour la gestion logistique.
+    \item \texttt{/api/articles} : Endpoints pour le catalogue (CRUD).
+\end{itemize}
+
+\section{Interface Utilisateur (Frontend)}
+L'interface est conçue comme une \textbf{Single Page Application (SPA)} légère.
+Elle permet de basculer dynamiquement entre les trois vues principales :
+\begin{enumerate}
+    \item \textbf{Vue Commandes} : Liste des commandes avec filtrage et formulaire d'ajout.
+    \item \textbf{Vue Livraisons} : Tableau de bord pour les chefs livreurs.
+    \item \textbf{Vue Articles} : Gestion du stock et des prix.
+\end{enumerate}
+
+\chapter{Présentation de l'Interface}
+
+Cette section présente les maquetes et l'interface finale de l'application.
+
+% INSTRUCTION POUR L'UTILISATEUR :
+% Placez vos captures d'écran dans le même dossier que ce fichier .tex
+% et décommentez les lignes \includegraphics.
+
+\section{Gestion des Commandes}
+L'interface de gestion des commandes permet de visualiser l'état de toutes les commandes et d'en saisir de nouvelles.
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{screenshot_commandes.png}
+    \fbox{\begin{minipage}{0.8\textwidth}
+        \centering
+        \vspace{2cm}
+        \textbf{[Insérer ici capture d'écran : Gestion des Commandes]}
+        \vspace{2cm}
+    \end{minipage}}
+    \caption{Interface de gestion des commandes}
+    \label{fig:commandes}
+\end{figure}
+
+On y retrouve :
+\begin{itemize}
+    \item La barre de recherche (Client, Date, Numéro).
+    \item Le tableau récapitulatif avec les états colorés.
+    \item Le formulaire d'ajout dynamique.
+\end{itemize}
+
+\section{Gestion des Livraisons}
+Cette interface est destinée à l'affectation des livreurs.
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{screenshot_livraisons.png}
+    \fbox{\begin{minipage}{0.8\textwidth}
+        \centering
+        \vspace{2cm}
+        \textbf{[Insérer ici capture d'écran : Gestion des Livraisons]}
+        \vspace{2cm}
+    \end{minipage}}
+    \caption{Interface de planification des livraisons}
+    \label{fig:livraisons}
+\end{figure}
+
+\section{Gestion des Articles}
+Permet de gérer le catalogue, les prix et le stock.
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{screenshot_articles.png}
+    \fbox{\begin{minipage}{0.8\textwidth}
+        \centering
+        \vspace{2cm}
+        \textbf{[Insérer ici capture d'écran : Gestion des Articles]}
+        \vspace{2cm}
+    \end{minipage}}
+    \caption{Interface de gestion du catalogue}
+    \label{fig:articles}
+\end{figure}
+
+\chapter{Extraits de Code Significatifs}
+
+\section{Code PL/SQL : Trigger de Vérification}
+Ce trigger assure qu'un livreur ne dépasse pas la limite autorisée.
+
+\begin{lstlisting}[language=SQL, caption=Trigger de limite de livraisons]
+CREATE OR REPLACE TRIGGER trg_liv_limite
+BEFORE INSERT OR UPDATE ON LivraisonCom
+FOR EACH ROW
+DECLARE
+    v_count NUMBER;
+BEGIN
+    -- Compter les livraisons du même livreur, même jour, même ville (via commande->client)
+    SELECT COUNT(*) INTO v_count
+    FROM LivraisonCom L
+    JOIN Commandes C ON L.nocde = C.nocde
+    JOIN Clients CL ON C.noclt = CL.noclt
+    WHERE L.livreur = :NEW.livreur
+    AND TRUNC(L.dateliv) = TRUNC(:NEW.dateliv)
+    -- (Logique simplifiée pour l'exemple)
+    ;
+    
+    IF v_count >= 15 THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Ce livreur a atteint sa limite journalière.');
+    END IF;
+END;
+/
+\end{lstlisting}
+
+\section{Code JavaScript : Appel API}
+Exemple de fonction frontend pour récupérer la liste des commandes.
+
+\begin{lstlisting}[language=Java, caption=Fonction de chargement des commandes]
+async function loadCommandes() {
+    try {
+        const response = await fetch('/api/commandes');
+        const commandes = await response.json();
+        
+        const tbody = document.querySelector('#commandes tbody');
+        tbody.innerHTML = '';
+        
+        commandes.forEach(c => {
+            // Création dynamique des lignes
+            const row = `
+                <tr>
+                    <td>${c.NOCDE}</td>
+                    <td>${c.NOM_CLIENT}</td>
+                    <td>${formatDate(c.DATECDE)}</td>
+                    <td><span class="badge ${c.ETATCDE}">${c.ETATCDE}</span></td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    } catch (error) {
+        console.error('Erreur chargement:', error);
+    }
+}
+\end{lstlisting}
+
+\chapter{Conclusion}
+Ce projet nous a permis de mettre en pratique les concepts avancés de SGBD (PL/SQL, Triggers, Optimisation) et de les intégrer au sein d'une architecture web moderne. L'application résultante répond aux exigences fonctionnelles de gestion de commandes et de logistique, tout en assurant l'intégrité et la sécurité des données grâce à la logique déportée dans la base Oracle.
+
+\end{document}

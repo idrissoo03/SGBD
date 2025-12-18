@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maquettes - Système de Gestion des Livraisons</title>
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚚 Système de Gestion des Livraisons</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="showMockup(event, 'commandes')">📦 Gestion Commandes</button>
+            <button class="tab-button" onclick="showMockup(event, 'livraisons')">🚛 Gestion Livraisons</button>
+            <button class="tab-button" onclick="showMockup(event, 'articles')">📱 Gestion Articles</button>
+        </div>
+
+        <!-- MAQUETTE GESTION DES COMMANDES -->
+        <div id="commandes" class="mockup active">
+            <h2>📦 Gestion des Commandes</h2>
+
+            <div class="search-bar">
+                <input id="commandes-search" type="text" placeholder="Rechercher par numéro, client ou date...">
+                <input id="commandes-date" type="date" aria-label="Filtrer par date">
+                <button id="commandes-search-btn" class="btn-primary">🔍 Rechercher</button>
+                <button id="commandes-date-btn" class="btn-secondary">📅 Filtrer par date</button>
+                <button id="commandes-add-btn" class="btn-success">➕ Nouvelle Commande</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Commande</th>
+                        <th>Client</th>
+                        <th>Date</th>
+                        <th>État</th>
+                        <th>Montant</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="card" style="margin-top: 30px;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">➕ Ajouter/Modifier une Commande</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Client *</label>
+                        <select id="commande-client">
+                            <option value="">Sélectionner un client...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="commande-save" class="btn-success">💾 Enregistrer</button>
+                    <button id="commande-reset" class="btn-secondary">🔄 Réinitialiser</button>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-left: 4px solid #667eea; border-radius: 4px;">
+                <strong>ℹ️ Transitions d'état autorisées :</strong><br>
+                EC → PR → LI → SO<br>
+                EC → AN | PR → AN | PR → AL
+            </div>
+        </div>
+
+        <!-- MAQUETTE GESTION DES LIVRAISONS -->
+        <div id="livraisons" class="mockup">
+            <h2>🚛 Gestion des Livraisons</h2>
+
+            <div class="search-bar">
+                <input id="livraisons-search" type="text" placeholder="Rechercher par commande, livreur ou ville...">
+                <input id="livraisons-date" type="date" aria-label="Filtrer par date de livraison">
+                <button id="livraisons-search-btn" class="btn-primary">🔍 Rechercher</button>
+                <button id="livraisons-date-btn" class="btn-secondary">📅 Filtrer par date</button>
+                <button id="livraisons-add-btn" class="btn-success">➕ Nouvelle Livraison</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Commande</th>
+                        <th>Client</th>
+                        <th>Ville</th>
+                        <th>Date Livraison</th>
+                        <th>Livreur</th>
+                        <th>Mode Paiement</th>
+                        <th>État</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="card" style="margin-top: 30px;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">➕ Ajouter/Modifier une Livraison</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>N° Commande *</label>
+                        <select id="livraison-commande">
+                            <option value="">Sélectionner une commande prête...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Livreur *</label>
+                        <select id="livraison-livreur">
+                            <option value="">Sélectionner un livreur...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date et Heure de Livraison *</label>
+                        <input id="livraison-date" type="datetime-local">
+                    </div>
+                    <div class="form-group">
+                        <label>Mode de Paiement *</label>
+                        <select id="livraison-modepay">
+                            <option value="Espèces">Espèces</option>
+                            <option value="Carte">Carte</option>
+                            <option value="Chèque">Chèque</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="livraison-save" class="btn-success">💾 Enregistrer</button>
+                    <button id="livraison-reset" class="btn-secondary">🔄 Réinitialiser</button>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                <strong>⚠️ Contraintes :</strong><br>
+                • Maximum 15 livraisons par jour et par ville pour un livreur<br>
+                • Modifications avant 9h pour livraisons du matin, avant 14h pour l'après-midi<br>
+                • Commande doit être en état "Prête" (PR)
+            </div>
+        </div>
+
+        <!-- MAQUETTE GESTION DES ARTICLES -->
+        <div id="articles" class="mockup">
+            <h2>📱 Gestion des Articles</h2>
+
+            <div class="search-bar">
+                <input id="articles-search" type="text" placeholder="Rechercher par code, désignation ou catégorie...">
+                <button id="articles-search-btn" class="btn-primary">🔍 Rechercher</button>
+                <button id="articles-add-btn" class="btn-success">➕ Nouvel Article</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <select id="articles-filter-category" style="width: 200px;">
+                    <option value="">Toutes catégories</option>
+                </select>
+                <select id="articles-filter-stock" style="width: 200px;">
+                    <option value="">Tous les stocks</option>
+                    <option value="high">Stock élevé (&gt; 20)</option>
+                    <option value="medium">Stock faible (1-20)</option>
+                    <option value="low">Rupture (0)</option>
+                </select>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Réf</th>
+                        <th>Désignation</th>
+                        <th>Catégorie</th>
+                        <th>Prix Achat</th>
+                        <th>Prix Vente</th>
+                        <th>Stock</th>
+                        <th>TVA</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="card" style="margin-top: 30px;">
+                <h3 id="article-form-title" style="color: #667eea; margin-bottom: 15px;">➕ Ajouter/Modifier un Article</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Désignation *</label>
+                        <input id="article-designation" type="text" placeholder="Ex: Samsung Galaxy S24">
+                    </div>
+                    <div class="form-group">
+                        <label>Catégorie *</label>
+                        <select id="article-categorie">
+                            <option>Smartphone</option>
+                            <option>Ordinateur Portable</option>
+                            <option>Audio</option>
+                            <option>Télévision</option>
+                            <option>Console de Jeu</option>
+                            <option>Tablette</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Prix d'Achat (DT) *</label>
+                        <input id="article-prixa" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Prix de Vente (DT) *</label>
+                        <input id="article-prixv" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantité en Stock *</label>
+                        <input id="article-qtestk" type="number" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Taux TVA (%) *</label>
+                        <input id="article-codetva" type="number" step="0.01" value="19.00">
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="article-save" class="btn-success">💾 Enregistrer</button>
+                    <button id="article-reset" class="btn-secondary">🔄 Réinitialiser</button>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 20px; padding: 15px; background: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
+                <strong>✓ Règles de validation :</strong><br>
+                • Prix de vente doit être supérieur au prix d'achat<br>
+                • Un article ne peut être ajouté qu'une seule fois (même désignation)<br>
+                • Suppression logique si l'article est utilisé dans des commandes<br>
+            </div>
+        </div>
+        <script src="script.js"></script>
+
+        <!-- MODAL FOR LIVRAISON DETAILS -->
+        <div id="livraison-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 id="livraison-details-title" style="color: #667eea; margin: 0;">Détails de la Livraison</h3>
+                    <button onclick="closeLivraisonDetailsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                </div>
+                <div id="livraison-details-content" style="color: #333;">
+                    <!-- Details will be populated here -->
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="livraison-details-modify" class="btn-primary" style="flex: 1;">✏️ Modifier</button>
+                    <button onclick="closeLivraisonDetailsModal()" class="btn-secondary" style="flex: 1;">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL FOR COMMANDE DETAILS -->
+        <div id="commande-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center;">
+            <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 id="commande-details-title" style="color: #667eea; margin: 0;">Détails de la Commande</h3>
+                    <button onclick="closeCommandeDetailsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">✕</button>
+                </div>
+                <div id="commande-details-content" style="color: #333;">
+                    <!-- Details will be populated here -->
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="commande-details-modify" class="btn-primary" style="flex: 1;">✏️ Modifier État</button>
+                    <button onclick="closeCommandeDetailsModal()" class="btn-secondary" style="flex: 1;">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+</body>
+
+</html>

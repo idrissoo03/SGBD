@@ -1,0 +1,299 @@
+-- =====================================================
+-- SCRIPTS DE TEST DES PACKAGES
+-- =====================================================
+
+SET SERVEROUTPUT ON;
+
+-- =====================================================
+-- TESTS PACKAGE COMMANDES
+-- =====================================================
+
+PROMPT ===== TEST 1: Ajouter une nouvelle commande =====
+DECLARE
+    v_nocde NUMBER;
+BEGIN
+    PKG_COMMANDES.AJOUTER_COMMANDE(1, v_nocde);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 2: Modifier l'état d'une commande (EC -> PR) =====
+BEGIN
+    PKG_COMMANDES.MODIFIER_ETAT_COMMANDE(5, 'PR');
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 3: Modifier l'état d'une commande (PR -> LI) =====
+BEGIN
+    PKG_COMMANDES.MODIFIER_ETAT_COMMANDE(3, 'LI');
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 4: Tentative de transition invalide (devrait échouer) =====
+BEGIN
+    PKG_COMMANDES.MODIFIER_ETAT_COMMANDE(5, 'SO'); -- EC -> SO invalide
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERREUR ATTENDUE: ' || SQLERRM);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 5: Annuler une commande =====
+BEGIN
+    PKG_COMMANDES.ANNULER_COMMANDE(8);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 6: Chercher une commande par numéro =====
+BEGIN
+    PKG_COMMANDES.CHERCHER_PAR_NUMERO(1);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 7: Chercher les commandes d'un client =====
+BEGIN
+    PKG_COMMANDES.CHERCHER_PAR_CLIENT(1);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 8: Chercher les commandes par date =====
+BEGIN
+    PKG_COMMANDES.CHERCHER_PAR_DATE(SYSDATE);
+END;
+/
+
+-- =====================================================
+-- TESTS PACKAGE LIVRAISONS
+-- =====================================================
+
+PROMPT;
+PROMPT ===== TEST 9: Ajouter une nouvelle livraison =====
+BEGIN
+    PKG_LIVRAISONS.AJOUTER_LIVRAISON(3, SYSDATE+1, 4, 'Espèces');
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 10: Tentative d'ajouter une livraison pour commande non prête (devrait échouer) =====
+BEGIN
+    PKG_LIVRAISONS.AJOUTER_LIVRAISON(5, SYSDATE+1, 4, 'Carte');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERREUR ATTENDUE: ' || SQLERRM);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 11: Modifier la date d'une livraison =====
+BEGIN
+    PKG_LIVRAISONS.MODIFIER_LIVRAISON(1, SYSDATE+2, NULL);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 12: Modifier le livreur d'une livraison =====
+BEGIN
+    PKG_LIVRAISONS.MODIFIER_LIVRAISON(2, NULL, 6);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 13: Chercher une livraison par commande =====
+BEGIN
+    PKG_LIVRAISONS.CHERCHER_PAR_COMMANDE(1);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 14: Chercher les livraisons d'un livreur =====
+BEGIN
+    PKG_LIVRAISONS.CHERCHER_PAR_LIVREUR(4);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 15: Chercher les livraisons par ville =====
+BEGIN
+    PKG_LIVRAISONS.CHERCHER_PAR_VILLE('1000');
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 16: Chercher les livraisons par date =====
+BEGIN
+    PKG_LIVRAISONS.CHERCHER_PAR_DATE(SYSDATE);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 17: Annuler une livraison =====
+BEGIN
+    PKG_LIVRAISONS.SUPPRIMER_LIVRAISON(9);
+END;
+/
+
+-- =====================================================
+-- TESTS PACKAGE ARTICLES
+-- =====================================================
+
+PROMPT;
+PROMPT ===== TEST 18: Ajouter un nouvel article =====
+DECLARE
+    v_refart NUMBER;
+BEGIN
+    PKG_ARTICLES.AJOUTER_ARTICLE(
+        'MacBook Pro 16"',
+        2000,
+        2800,
+        19,
+        'Ordinateur Portable',
+        20,
+        v_refart
+    );
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 19: Tentative d'ajouter un article avec prix invalide (devrait échouer) =====
+DECLARE
+    v_refart NUMBER;
+BEGIN
+    PKG_ARTICLES.AJOUTER_ARTICLE(
+        'Article Test',
+        1000,
+        900, -- Prix vente < prix achat
+        19,
+        'Test',
+        10,
+        v_refart
+    );
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERREUR ATTENDUE: ' || SQLERRM);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 20: Tentative d'ajouter un article en double (devrait échouer) =====
+DECLARE
+    v_refart NUMBER;
+BEGIN
+    PKG_ARTICLES.AJOUTER_ARTICLE(
+        'Samsung Galaxy S23', -- Existe déjà
+        800,
+        1200,
+        19,
+        'Smartphone',
+        50,
+        v_refart
+    );
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERREUR ATTENDUE: ' || SQLERRM);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 21: Modifier un article =====
+BEGIN
+    PKG_ARTICLES.MODIFIER_ARTICLE(
+        1,
+        'Samsung Galaxy S23 Ultra', -- Nouvelle désignation
+        850, -- Nouveau prix achat
+        1300, -- Nouveau prix vente
+        NULL,
+        NULL
+    );
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 22: Chercher un article par code =====
+BEGIN
+    PKG_ARTICLES.CHERCHER_PAR_CODE(1);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 23: Chercher des articles par désignation =====
+BEGIN
+    PKG_ARTICLES.CHERCHER_PAR_DESIGNATION('Samsung');
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 24: Chercher des articles par catégorie =====
+BEGIN
+    PKG_ARTICLES.CHERCHER_PAR_CATEGORIE('Smartphone');
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 25: Supprimer un article non utilisé (suppression physique) =====
+BEGIN
+    PKG_ARTICLES.SUPPRIMER_ARTICLE(15);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 26: Supprimer un article utilisé (suppression logique) =====
+BEGIN
+    PKG_ARTICLES.SUPPRIMER_ARTICLE(1);
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 27: Vérifier la suppression logique =====
+BEGIN
+    PKG_ARTICLES.CHERCHER_PAR_CODE(1);
+END;
+/
+
+-- =====================================================
+-- TESTS DES TRIGGERS
+-- =====================================================
+
+PROMPT;
+PROMPT ===== TEST 28: Test trigger validation téléphone personnel (devrait échouer) =====
+BEGIN
+    INSERT INTO Personnel (idpers, nompers, prenompers, telpers, login, motP, codeposte)
+    VALUES (seq_idpers.NEXTVAL, 'Test', 'User', '12345', 'test', 'test123', 1);
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERREUR ATTENDUE: ' || SQLERRM);
+        ROLLBACK;
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 29: Test trigger validation téléphone client (devrait échouer) =====
+BEGIN
+    INSERT INTO Clients (noclt, nomclt, adrclt, code_postal, telclt)
+    VALUES (seq_noclt.NEXTVAL, 'Test Client', '123 Rue Test', '1000', '123456');
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERREUR ATTENDUE: ' || SQLERRM);
+        ROLLBACK;
+END;
+/
+
+PROMPT;
+PROMPT ===== TEST 30: Test trigger login/mot de passe obligatoires (devrait échouer) =====
+BEGIN
+    INSERT INTO Personnel (idpers, nompers, prenompers, login, motP, codeposte)
+    VALUES (seq_idpers.NEXTVAL, 'Test', 'User', NULL, 'test123', 1);
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ERREUR ATTENDUE: ' || SQLERRM);
+        ROLLBACK;
+END;
+/
+
+PROMPT;
+PROMPT ===== TESTS TERMINÉS =====
